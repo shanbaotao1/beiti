@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseDocx } from '../parsers/docxParser'
+import { parseExcel } from '../parsers/excelParser'
 import type { ParseReport } from '../types'
 import { listBanks, deleteBank } from '../store/banks'
 import { bulkAddQuestions } from '../store/questions'
@@ -23,11 +24,16 @@ export default function ImportPage() {
     if (!file) return
     setErr('')
     setReport(null)
-    setBankName(file.name.replace(/\.docx$/i, ''))
+    const fname = file.name
+    const isExcel = /\.xlsx?$/i.test(fname)
+    const baseName = fname.replace(/\.xlsx?$/i, '').replace(/\.docx$/i, '')
+    setBankName(baseName)
     setParsing(true)
     try {
       const buf = await file.arrayBuffer()
-      const rep = await parseDocx(buf, file.name.replace(/\.docx$/i, ''))
+      const rep = isExcel
+        ? await parseExcel(buf, baseName)
+        : await parseDocx(buf, baseName)
       setReport(rep)
     } catch (ex) {
       setErr('解析失败：' + (ex as Error).message)
@@ -74,7 +80,7 @@ export default function ImportPage() {
       <input
         ref={fileRef}
         type="file"
-        accept=".docx"
+        accept=".docx,.xlsx"
         className="hidden"
         onChange={onPick}
       />
@@ -83,7 +89,7 @@ export default function ImportPage() {
         className="flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-brand/40 bg-white py-10 text-center"
       >
         <span className="text-4xl">📄</span>
-        <span className="font-medium text-brand">点击选择 Word 题库（.docx）</span>
+        <span className="font-medium text-brand">点击选择 Word / Excel 题库（.docx / .xlsx）</span>
         <span className="text-xs text-slate-400">支持单选 / 多选 / 判断，自动识别题型与答案</span>
       </button>
 
@@ -93,7 +99,7 @@ export default function ImportPage() {
       {report && (
         <div className="mt-4 space-y-4">
           <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <label className="mb-1 block text-sm text-slate-500">题库名称</label>
+            <label className="mb-1 block text-sm text-slate-400">题库名称</label>
             <input
               value={bankName}
               onChange={(e) => setBankName(e.target.value)}

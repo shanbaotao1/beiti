@@ -1,0 +1,22 @@
+node_modules
+dist
+*.local
+.env
+.DS_Store
+*.log
+*.tsbuildinfo
+
+# Capacitor / Android 构建产物（不入库）
+android/.gradle/
+android/app/build/
+android/build/
+android/captures/
+android/local.properties
+android/**/*.keystore
+android/**/*.jks
+# cap sync 生成的 web 资源（构建前会重新生成）
+android/app/src/main/assets/public/
+
+# 单文件 HTML 实验残留（非项目源码）
+beiti.html
+standalone/
