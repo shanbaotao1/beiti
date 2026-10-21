@@ -21,14 +21,22 @@ const navItems = [
 export default function App() {
   const location = useLocation()
   const hideNav = location.pathname.startsWith('/study') || location.pathname.startsWith('/exam')
-  const [needRefresh, setNeedRefresh] = useState(false)
+  const [checking, setChecking] = useState(false)
   const updateSWRef = useRef<((reload?: boolean) => Promise<void>) | null>(null)
   useEffect(() => {
-    updateSWRef.current = registerSW({
-      onNeedRefresh: () => setNeedRefresh(true)
-    })
+    // autoUpdate：Service Worker 自动更新；这里保留 updateSW 供"检查更新"按钮手动触发
+    updateSWRef.current = registerSW({})
   }, [])
-  const handleUpdate = () => updateSWRef.current?.(true)
+  const handleCheckUpdate = async () => {
+    if (checking) return
+    setChecking(true)
+    try {
+      await updateSWRef.current?.(true)
+    } finally {
+      // 若无新版本则立即返回，复位按钮；若有新版本会触发 reload
+      setTimeout(() => setChecking(false), 1000)
+    }
+  }
   return (
     <div className="flex h-full flex-col bg-slate-100">
       <main className="flex-1 overflow-y-auto">
@@ -48,19 +56,15 @@ export default function App() {
 
       {!hideNav && (
         <>
-          {needRefresh && (
-            <div className="flex items-center justify-between gap-2 bg-brand px-4 py-2 text-sm text-white shadow-lg">
-              <span>🎉 发现新版本，点击更新以体验最新功能</span>
-              <button
-                onClick={handleUpdate}
-                className="shrink-0 rounded bg-white px-3 py-1 text-xs font-semibold text-brand"
-              >
-                立即更新
-              </button>
-            </div>
-          )}
-          <div className="bg-white pb-1 text-center text-[10px] leading-4 text-slate-300">
-            v{APP_VERSION} · 构建 {formatBuildTime(BUILD_TIME)}
+          <div className="flex items-center justify-center gap-2 bg-white pb-1 text-[10px] leading-4 text-slate-300">
+            <span>v{APP_VERSION} · 构建 {formatBuildTime(BUILD_TIME)}</span>
+            <button
+              onClick={handleCheckUpdate}
+              disabled={checking}
+              className="text-brand/70 underline underline-offset-2 disabled:opacity-50"
+            >
+              {checking ? '检查中…' : '检查更新'}
+            </button>
           </div>
           <nav className="safe-bottom flex border-t border-slate-200 bg-white">
           {navItems.map((it) => (

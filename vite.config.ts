@@ -17,8 +17,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt', // 有新版本时弹提示，而非静默自动更新
-      injectRegister: null, // 由我们在 App.tsx 手动 registerSW 以拿到 onNeedRefresh 钩子
+      registerType: 'autoUpdate', // 自动静默更新：避免旧版没有"更新提示"代码时卡死
+      injectRegister: null, // 由我们在 App.tsx 手动 registerSW
       includeAssets: ['favicon.svg'],
       manifest: {
         name: '背题软件',
@@ -37,7 +37,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-        cleanupOutdatedCaches: true
+        cleanupOutdatedCaches: true,
+        // 新 SW 立即接管，旧页面刷新即得新版，避免"等待中"卡旧版
+        skipWaiting: true,
+        clientsClaim: true
       }
     })
   ]
